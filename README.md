@@ -1,70 +1,122 @@
-# zoner-mvp
+# **Zoner MVP - Event-Driven Backend**
 
-This project represents an **MVP real-time data processing pipeline** with a focus on event-driven architecture. It integrates **Kafka** for message streaming, **Redis** for caching, **SQLite** for persistence, and **Python** for processing.
-
-## **Project Overview**
-
-### **Components**
-1. **Kafka**: Acts as the message broker, enabling real-time event streaming.
-   - **Producer**: Simulates user activity events and sends them to Kafka.
-   - **Consumer**: Processes messages from Kafka and stores them in SQLite.
-
-2. **Redis**: Serves as an in-memory cache for pre-aggregated query results, reducing load on SQLite.
-
-3. **SQLite**: Lightweight database used to persist raw user activity data for historical analysis.
-
-4. **Docker Compose**: Manages the deployment of all services in a containerized environment.
-
-5. **Python**: Used for:
-   - Producing events (producer.py).
-   - Consuming events and persisting them to SQLite (consumer.py).
-   - Aggregating data and caching results in Redis (cache_manager.py).
+Zoner is a real-time platform designed to help users optimize their circadian rhythms, manage jet lag, and adjust to new time zones. This Proof of Concept (PoC) demonstrates the backend architecture for ingesting, processing, and storing user activity data using Kafka, Python, Snowflake, and Redis.
 
 ---
 
-## **Explanation of Key Code and Configurations**
+## **Table of Contents**
 
-### **Kafka**
-#### **Dockerfile**
-- Uses `confluentinc/cp-kafka:latest` or `bitnami/kafka:latest` images.
-- Provides environment variables for Kafka broker configuration:
-  - `KAFKA_ZOOKEEPER_CONNECT`: Links Kafka to Zookeeper.
-  - `KAFKA_ADVERTISED_LISTENERS`: Exposes the broker for external communication.
+1. [Project Overview](#project-overview)
+2. [Architecture](#architecture)
+3. [Technologies Used](#technologies-used)
+4. [Setup Instructions](#setup-instructions)
+5. [How It Works](#how-it-works)
 
-#### **Producer**
-- Simulates user activity with randomized data (`user_id`, `activity`, `timestamp`).
-- Sends messages to Kafka with the `user_activity` topic.
+---
 
-#### **Consumer**
-- Reads messages from Kafka, parses them, and writes them into SQLite.
-- Ensures a durable storage layer for raw event data.
+## **Project Overview**
 
-### **Redis**
-- Provides real-time caching for aggregated activity summaries.
-- Uses `cache_manager.py` to periodically update the cache with aggregated data from SQLite.
+This project implements a real-time event-driven architecture to handle user activity data, such as:
+- Sleep schedules
+- Meal timings
+- Light exposure data
 
-### **SQLite**
-- Lightweight relational database.
-- Stores raw `user_activity` data with a simple schema (`user_id`, `activity`, `timestamp`).
+The platform ingests user activity events, processes them in real-time, and stores the data in Snowflake for further analytics and recommendations.
 
-### **Docker Compose**
-- Orchestrates the services: Zookeeper, Kafka, Redis, and Python-based services.
-- Volume mounts ensure data persistence and easy code updates during development.
+---
 
-## Setup
+## **Architecture**
 
-```bash
-docker compose up
+### **High-Level Architecture**
+```plaintext
+[User Activity Events (Producer)] --> [Kafka (Event Broker)] --> [Python Consumer] --> [Snowflake (Database)]
 ```
 
-## Run
+### **Components**
+1. **Kafka**: A distributed message broker that ingests user activity events.
+2. **Python Producer**: Simulates real-time user activity and publishes events to Kafka.
+3. **Python Consumer**: Processes Kafka events and stores them in Snowflake.
+4. **Snowflake**: Cloud-based data warehouse for storing and analyzing user activity data.
+5. **Redis**: Caching layer for real-time recommendations (optional for this MVP).
 
+---
+
+## **Technologies Used**
+
+- **Apache Kafka**: Real-time event streaming.
+- **Python**: For producing and consuming Kafka events.
+- **Snowflake**: Data warehouse for storing user activity data.
+- **Redis**: In-memory database for caching recommendations (optional).
+- **Docker Compose**: Orchestrates multi-container deployment.
+- **Dotenv**: Securely manages environment variables.
+
+---
+
+## **Setup Instructions**
+
+### **1. Prerequisites**
+- Install Docker Desktop
+- Install Python 3.x
+- Create a Snowflake account and set up credentials.
+
+### **2. Clone the Repository**
 ```bash
-docker compose exec python python consumer.py
+git clone https://github.com/cynthialmy/zoner-mvp.git
+cd zoner-mvp
 ```
 
-## Stop
+### **3. Set Up Environment Variables**
+Create a `.env` file in the `python` directory with the following variables:
+
+```plaintext
+KAFKA_BROKER=kafka:9092
+SNOWFLAKE_USER=<your_snowflake_username>
+SNOWFLAKE_PASSWORD=<your_snowflake_password>
+SNOWFLAKE_ACCOUNT=<your_snowflake_account_identifier>
+SNOWFLAKE_DATABASE=ZONER_DB
+SNOWFLAKE_SCHEMA=PUBLIC
+```
+
+### **4. Start the Services**
+Use Docker Compose to start all services (Kafka, Zookeeper, Redis, and Python).
 
 ```bash
-docker compose down
+docker-compose up --build
 ```
+
+### **5. Verify Kafka**
+- Create the `user_activity` topic:
+  ```bash
+  docker-compose exec kafka kafka-topics.sh --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1 --topic user_activity
+  ```
+- Verify the topic:
+  ```bash
+  docker-compose exec kafka kafka-topics.sh --list --bootstrap-server localhost:9092
+  ```
+
+### **6. Test the Data Pipeline**
+- Check Python producer logs to verify events are being produced:
+  ```bash
+  docker-compose logs python
+  ```
+- Verify Snowflake:
+  - Log in to Snowflake.
+  - Query the `user_activity` table:
+    ```sql
+    SELECT * FROM ZONER_DB.PUBLIC.USER_ACTIVITY;
+    ```
+
+---
+
+## **How It Works**
+
+1. **Producer**:
+   - The `producer.py` script generates random user activity events (e.g., sleep, meal).
+   - Events are published to Kafka’s `user_activity` topic.
+
+2. **Consumer**:
+   - The `consumer.py` script reads events from Kafka.
+   - Processes the data and inserts it into the Snowflake `user_activity` table.
+
+3. **Database**:
+   - Snowflake stores user activity data, which can be queried for analysis or used to generate recommendations.
