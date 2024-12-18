@@ -1,8 +1,6 @@
 # zoner-mvp
 
-This project represents an **MVP real-time data processing pipeline** with a focus on event-driven architecture. It integrates **Kafka** for message streaming, **Redis** for caching, **SQLite** for persistence, and **Python** for processing. Here’s an explanation and critique of the individual components, along with suggestions for improvement.
-
----
+This project represents an **MVP real-time data processing pipeline** with a focus on event-driven architecture. It integrates **Kafka** for message streaming, **Redis** for caching, **SQLite** for persistence, and **Python** for processing.
 
 ## **Project Overview**
 
