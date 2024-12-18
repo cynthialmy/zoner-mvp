@@ -1,3 +1,5 @@
+# kafka/Dockerfile
+
 FROM confluentinc/cp-kafka:latest
 
 # Set environment variables for Kafka

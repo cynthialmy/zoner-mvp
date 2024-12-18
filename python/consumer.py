@@ -1,3 +1,5 @@
+# python/consumer.py
+
 from confluent_kafka import Consumer
 import sqlite3
 import json
