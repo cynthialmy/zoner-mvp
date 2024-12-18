@@ -1,0 +1,4 @@
+confluent-kafka
+redis
+kafka-python>=2.0.2
+redis>=4.5.0
